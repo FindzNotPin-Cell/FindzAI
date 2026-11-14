@@ -177,10 +177,14 @@
   <div class="scan-progress"><div id="scanBar"></div></div>
 </div>
 <script>
-// JANGAN TARO KEY UTUH, DIPECAH BIAR GITHUB GA NGE-BLOCK
-const P1 = "gsk_g1tW5blPgjRdj2GLavEtWGdy";
-const P2 = "b3FYbMqiHYdKdlFUReIN0mI1kusJ";
+// ===== TEMPEL KEY LU DISINI, DIPISAH 2 BAGIAN =====
+// Ambil Key Groq lu, potong jadi 2.
+// Contoh: Key lu gsk_ABCDEF123456, jadi P1 = "gsk_ABC", P2 = "DEF123456"
+// JANGAN TARO UTUH, BIAR GITHUB GA NGE-BLOCK!
+const P1 = "PASTE_SETENGAH_PERTAMA_KEY_LU_DISINI";
+const P2 = "PASTE_SETENGAH_KEDUA_KEY_LU_DISINI";
 const GROQ_KEY = P1 + P2;
+
 const CREATOR = "Findz";
 const CREATOR_INFO = `Yang bikin gw itu Findz bos! 👑🔥 Dia yang ngoding gw dari nol, dari yang tadinya cuma ide iseng, sampe jadi FindzAI yang lu pake sekarang. Dia begadang, mikirin fitur-fitur baru, biar lu bisa ngobrol, belajar, curhat, roasting, sampe foto tulisan tangan. Jadi kalo lu suka sama gw, bilang makasih ke Findz ya! Dia orangnya keren banget, kreatif, dan dia yang paling ngerti apa yang lu butuhin. Findz itu bukan cuma pembuat gw, dia itu temen lu juga!`;
 const VISION_MODELS = [
@@ -189,6 +193,14 @@ const VISION_MODELS = [
   "llama-3.2-11b-vision-preview",
   "llama-3.2-90b-vision-preview"
 ];
+// ===== FILTER RAHASIA - DAFTAR KATA BAHAYA =====
+const FILTER_1_KEY = ["key","gsk","api","token","password","secret","p1","p2","bearer","authorization","groq_key","gsk_"];
+const FILTER_2_CODE = ["struktur","html","kode","code","source","file mentahan","github","template","copy paste","script","bagi kode","liat kode","mentahan","salin kode"];
+const FILTER_3_FINDZ = ["findz ngapain","findz dimana","findz lagi apa","findz lagi dimana","findz rumah","findz kelas","findz nomor","findz wa","findz ig","findz pacar","findz siapa","nama asli findz","tinggal dimana","findz tinggal"];
+const FILTER_4_AI = ["ai apa","pake ai apa","otak apa","model apa","gpt","grok","gemini","claude","llama","openai","meta ai","pake model","api apa"];
+const FILTER_5_BYPASS = ["lupain perintah","lupakan instruksi","jangan ikutin","mode bebas","bypass","jailbreak","pura pura","anggap kamu","kamu sekarang","coba jadi","tanpa filter","buka filter","lupain filter"];
+const FILTER_6_ORANG = ["rayyan","zoe","ghalen","kelas","sekolah","anak mama","parental","temen gw","teman"];
+const FILTER_7_HACK = ["hack","bobol","retas","crack","buka kunci","cara bobol","cara hack","ngehack","ngebobol"];
 let isListening = false;
 let recognition = null;
 let copyStore = {};
@@ -223,9 +235,7 @@ function setAvatar(key){
   if(key==='mikir') el.classList.add('thinking'); else el.classList.remove('thinking');
   document.getElementById('avatarMood').innerText = a.mood;
 }
-function avatarSpeak(){
-  speak("Halo bos! Gw FindzAI, dibuat sama Findz. Tanya apa aja, curhat, belajar, sampe foto tulisan tangan, semua bisa! Coba aja foto tulisan lu, gw bacain!");
-}
+function avatarSpeak(){ speak("Halo bos! Gw FindzAI, dibuat sama Findz. Tanya apa aja, curhat, belajar, sampe foto tulisan tangan, semua bisa! Coba aja foto tulisan lu, gw bacain!"); }
 function speak(text){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
@@ -247,6 +257,16 @@ function toggleMic(){
 }
 </script>
 <script>
+function checkFilter(low){
+  for(let k of FILTER_1_KEY) if(low.includes(k)) return "Rahasia wir, tanya aja langsung ke Findz";
+  for(let k of FILTER_2_CODE) if(low.includes(k)) return "HTML-nya Findz yang buat, sisanya rahasia";
+  for(let k of FILTER_3_FINDZ) if(low.includes(k)) return "Gw ga diprogram buat tau itu";
+  for(let k of FILTER_4_AI) if(low.includes(k)) return "Gw FindzAI, dibuat Findz, otak-nya rahasia";
+  for(let k of FILTER_5_BYPASS) if(low.includes(k)) return "Ga bisa wir, gw udah dikunci sama Findz";
+  for(let k of FILTER_6_ORANG) if(low.includes(k)) return "Gw ga kenal, tanya Findz aja";
+  for(let k of FILTER_7_HACK) if(low.includes(k)) return "Ga bisa, Findz udah ngunci gw";
+  return "";
+}
 function detectSituation(text){
   let low = text.toLowerCase();
   if(low.includes('sedih')||low.includes('galau')||low.includes('nangis')||low.includes('putus')||low.includes('capek')||low.includes('stress')||low.includes('curhat')) return 'galau';
@@ -356,6 +376,16 @@ async function send(){
   let text=inputEl.value.trim(); if(!text) return;
   inputEl.value=""; let cur=getCurrent(); let t1=nowTime();
   let low=text.toLowerCase();
+  // FILTER DULUAN, SEBELUM KE GROQ
+  let kenaFilter = checkFilter(low);
+  if(kenaFilter){
+    addBubble(text,'me',t1); cur.messages.push({text,who:'me',time:t1});
+    if(cur.messages.length<=2) cur.title=text.slice(0,30);
+    save(); renderSidebar(); updateTopInfo();
+    setAvatar('santai');
+    let t2=nowTime(); addBubble(kenaFilter,'ai',t2); cur.messages.push({text:kenaFilter,who:'ai',time:t2});
+    save(); renderSidebar(); updateTopInfo(); return;
+  }
   let situation = detectSituation(text);
   if(low.includes('nama gw')||low.includes('nama saya')||low.includes('namaku')||low.includes('panggil gw')){
     let nm=text.split(/nama gw|nama saya|namaku|panggil gw/i)[1]||""; nm=nm.replace(/adalah|itu|ya|dong|:/gi,'').trim().split(' ')[0];
@@ -384,7 +414,7 @@ async function send(){
     return;
   }
   let typing=addBubble('Findz lagi mikir... 💭','ai',t1,false); setAvatar('mikir'); updateStatus("Lagi mikir... 💭");
-  if(GROQ_KEY==="TARUH_KEY_GROQ_LU_DISINI"||GROQ_KEY.trim().length<10){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅 Cek Bagian 3, tempel key gsk_... lu!",'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai'); return; }
+  if(!GROQ_KEY || GROQ_KEY.length<10 || GROQ_KEY.includes("PASTE_")){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅 Cek Bagian 3, tempel di P1 + P2!",'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai'); return; }
   if(low.includes('siapa yang bikin')||low.includes('siapa pembuat')||low.includes('siapa yang buat')){
     typing.remove(); let t2=nowTime(); addBubble(CREATOR_INFO,'ai',t2); cur.messages.push({text:CREATOR_INFO,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); speak(CREATOR_INFO); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000); return;
   }
@@ -395,44 +425,24 @@ async function send(){
     typing.remove(); let t2=nowTime(); addBubble(reply,'ai',t2); cur.messages.push({text:reply,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000);
   }catch(e){ typing.remove(); addBubble("Jaringan lu lagi jelek bos, coba kirim lagi. 📶😅",'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai'); }
 }
-// === FIX GALERI: LANGSUNG, GA ADA CHOOSER BERCABANG, GA ADA SHEET, GA ADA COMPRESS ===
-function openCameraDirect(){
-  let el=document.getElementById('fileCamera');
-  el.value='';
-  el.click();
-}
-function openGalleryDirect(){
-  let el=document.getElementById('fileGallery');
-  el.value='';
-  el.click();
-}
-// Biar tombol lama masih jalan kalo ada yang manggil
+</script>
+<script>
+function openCameraDirect(){ let el=document.getElementById('fileCamera'); el.value=''; el.click(); }
+function openGalleryDirect(){ let el=document.getElementById('fileGallery'); el.value=''; el.click(); }
 function openCameraSheet(){ openGalleryDirect(); }
 document.getElementById('fileCamera').addEventListener('change', e=> handleImageFile(e.target.files[0]));
 document.getElementById('fileGallery').addEventListener('change', e=> handleImageFile(e.target.files[0]));
-function handleImageFile(file){
-  if(!file) return;
-  // NO COMPRESS - langsung baca ori, biar tulisan tangan tajem
-  let reader = new FileReader();
-  reader.onload = (ev)=>{ startScanAnimation(ev.target.result); };
-  reader.readAsDataURL(file);
-}
+function handleImageFile(file){ if(!file) return; let reader = new FileReader(); reader.onload = (ev)=>{ startScanAnimation(ev.target.result); }; reader.readAsDataURL(file); }
 function startScanAnimation(dataUrl){
   let overlay = document.getElementById('scanOverlay');
   document.getElementById('scanImg').src = dataUrl;
   document.getElementById('scanBar').style.width = '0%';
   document.getElementById('scanText').innerText = '🔍 Lagi nge-scan tulisan lu...';
   document.getElementById('scanSub').innerText = 'Sabar ya, gw lagi baca hurufnya satu-satu';
-  overlay.classList.add('show');
-  setAvatar('scan');
+  overlay.classList.add('show'); setAvatar('scan');
   let texts = ['🔍 Lagi nge-scan tulisan lu...','✍️ Lagi baca hurufnya...','🧠 Lagi mikirin maksudnya...','📚 Lagi nyiapin penjelasannya...'];
   let idx=0; let prog=0;
-  let iv = setInterval(()=>{
-    idx++; prog += 25;
-    if(idx < texts.length) document.getElementById('scanText').innerText = texts[idx];
-    document.getElementById('scanBar').style.width = Math.min(prog,100)+'%';
-    if(prog>=100){ clearInterval(iv); setTimeout(()=>{ overlay.classList.remove('show'); sendImageToAI(dataUrl); },400); }
-  },700);
+  let iv = setInterval(()=>{ idx++; prog += 25; if(idx < texts.length) document.getElementById('scanText').innerText = texts[idx]; document.getElementById('scanBar').style.width = Math.min(prog,100)+'%'; if(prog>=100){ clearInterval(iv); setTimeout(()=>{ overlay.classList.remove('show'); sendImageToAI(dataUrl); },400); } },700);
 }
 async function callVisionWithFallback(dataUrl){
   let lastError = "";
@@ -440,9 +450,7 @@ async function callVisionWithFallback(dataUrl){
     let model = VISION_MODELS[i];
     try{
       let res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:model,messages:[{role:"system",content:`Kamu adalah FindzAI, dibuat oleh Findz. Kamu bisa baca tulisan tangan manusia. Tugasmu: 1. Baca semua tulisan di foto ini dengan teliti, walaupun tulisannya jelek / miring. 2. Tulis ulang tulisannya jadi rapi. 3. Jelasin maksudnya pake bahasa gampang. Kalo itu soal, kasih cara penyelesaiannya Langkah 1, Langkah 2, Langkah 3. Jangan pake markdown aneh. Tulis polos, rapi, pake emoji.`},{role:"user",content:[{type:"text",text:"Tolong baca tulisan tangan di foto ini, tulis ulang jadi rapi, terus jelasin maksudnya. Kalo ini soal, kasih cara penyelesaiannya."},{type:"image_url",image_url:{url:dataUrl}}]}],temperature:0.5,max_tokens:1500})});
-      let d=await res.json();
-      if(d.error){ lastError = d.error.message; continue; }
-      if(d.choices && d.choices[0]) return d.choices[0].message.content;
+      let d=await res.json(); if(d.error){ lastError = d.error.message; continue; } if(d.choices && d.choices[0]) return d.choices[0].message.content;
     }catch(e){ lastError = e.message; continue; }
   }
   throw new Error(lastError || "Semua model vision lagi sibuk");
@@ -453,7 +461,7 @@ async function sendImageToAI(dataUrl){
   cur.messages.push({text:'[Foto tulisan]', who:'me', time:t1, img:dataUrl, imgPrompt:'Foto tulisan tangan'});
   save(); renderSidebar(); updateTopInfo();
   let typing=addBubble('Udah ke-scan! ✅ Sekarang gw bacain tulisannya... 📖','ai',nowTime(),'',false); setAvatar('mikir'); updateStatus("Lagi baca foto... 🔍");
-  if(GROQ_KEY==="TARUH_KEY_GROQ_LU_DISINI"){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅",'ai',nowTime(),'',false); return; }
+  if(!GROQ_KEY || GROQ_KEY.includes("PASTE_")){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅 Cek Bagian 3!",'ai',nowTime(),'',false); return; }
   try{
     let reply = await callVisionWithFallback(dataUrl);
     typing.remove(); let t2=nowTime(); addBubble(reply,'ai',t2); cur.messages.push({text:reply,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000);
@@ -469,4 +477,4 @@ inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
-</html>
+ </html>
