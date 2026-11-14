@@ -290,8 +290,10 @@ function isImageRequest(text){
   return low.includes('bikin gambar') || low.includes('buatin gambar') || low.includes('gambar') || low.includes('lukis') || low.includes('buatkan gambar');
 }
 function makeImage(prompt){
-  let clean = prompt.replace(/bikinin gambar|buatin gambar|bikin gambar|buatkan gambar|gambar/gi,'').trim() || "kucing lucu";
-  let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean + ", cute, high quality, detailed")}?width=512&height=512&seed=${Date.now()}&nologo=true`;
+  let clean = prompt.replace(/bikinin gambar|buatin gambar|bikin gambar|buatkan gambar|gambar|lukis|buatin|bikinin/gi,'').trim() || "kelinci lucu";
+  if(clean.length < 3) clean = "kelinci lucu putih, mata besar, imut";
+  // Pake model flux, lebih stabil, ga ada promosi
+  let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean + ", cute, high quality, detailed, 3d cartoon style")}?width=1024&height=1024&seed=${Math.floor(Math.random()*999999)}&model=flux&nologo=true&safe=true`;
   return {url, clean};
 }
 function renderText(text){
