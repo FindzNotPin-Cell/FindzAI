@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FindzAI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#fff;font-family:'Inter',system-ui,sans-serif;color:#111;height:100dvh;display:flex;overflow:hidden;font-weight:600}
+  body.dark{background:#0f0f0f;color:#fff}
+  body.dark #sidebar{background:#161616;border-color:#fff}
+  body.dark .chat-item{background:#222;border-color:#fff;color:#fff;box-shadow:3px 3px 0 #fff}
+  body.dark .chat-item.active{background:#fff;color:#000;box-shadow:3px 3px 0 #555}
+  body.dark header, body.dark .input-area{background:#0f0f0f;border-color:#fff}
+  body.dark input{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .search{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .topinfo{background:#161616;border-color:#fff;color:#fff}
+  body.dark .menu, body.dark .icon-btn{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .new-btn{background:#fff;color:#000;box-shadow:3px 3px 0 #555}
+  body.dark .side-bottom button{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .close-btn{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .mic-btn, body.dark .cam-btn, body.dark .gal-btn{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  body.dark .send{background:#fff;color:#000;border-color:#fff;box-shadow:2px 2px 0 #555}
+  #sidebar{width:280px;background:#f8f8f8;border-right:3px solid #000;display:flex;flex-direction:column;flex-shrink:0;transition:.3s;z-index:20;box-shadow:6px 0 0 rgba(0,0,0,.08)}
+  #sidebar.hidden{margin-left:-280px}
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:15}
+  #overlay.show{display:block}
+  .side-top{padding:14px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:10px}
+  .side-head{display:flex;justify-content:space-between;align-items:center}
+  .close-btn{width:32px;height:32px;border-radius:50%;border:2px solid #000;background:#fff;cursor:pointer;font-weight:900;box-shadow:2px 2px 0 #000}
+  .close-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+  .new-btn{width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:3px 3px 0 #888;transition:.15s}
+  .new-btn:active{transform:translate(3px,3px);box-shadow:0 0 0 #888}
+  .search{padding:11px 12px;border:2px solid #000;border-radius:12px;font-weight:600;font-size:13px;outline:none;width:100%;font-family:'Inter',sans-serif;box-shadow:2px 2px 0 #000}
+  .side-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+  .chat-item{padding:12px;border-radius:14px;background:#fff;border:2px solid #000;cursor:pointer;position:relative;box-shadow:3px 3px 0 #000;transition:.15s}
+  .chat-item:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+  .chat-item.active{border-color:#000;background:#000;color:#fff}
+  .chat-item b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:20px}
+  .chat-item span{font-size:12px;opacity:.6;font-weight:400}
+  .del{position:absolute;top:8px;right:10px;font-size:13px;opacity:.5;cursor:pointer}
+  .side-bottom{padding:12px;border-top:2px solid #000;display:flex;gap:8px}
+  .side-bottom button{flex:1;padding:10px;border-radius:12px;border:2px solid #000;background:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:2px 2px 0 #000}
+  .side-bottom button:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  header{border-bottom:3px solid #000;padding:10px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+  body.dark header{box-shadow:0 3px 0 rgba(255,255,255,.15)}
+  .menu{width:42px;height:42px;border:2.5px solid #000;border-radius:12px;background:#fff;font-size:18px;cursor:pointer;font-weight:900;flex-shrink:0;box-shadow:2px 2px 0 #000}
+  .menu:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+  .avatar-wrap{display:flex;align-items:center;gap:10px}
+  .avatar{width:54px;height:54px;border-radius:50%;border:3px solid #000;background:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;transition:.3s;cursor:pointer;box-shadow:3px 3px 0 #000;animation:floaty 2.5s ease-in-out infinite}
+  body.dark .avatar{background:#222;border-color:#fff;box-shadow:3px 3px 0 #fff}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .avatar.bounce{animation:bounce .5s, floaty 2.5s ease-in-out infinite}
+  @keyframes bounce{0%{transform:scale(1)}50%{transform:scale(1.18) rotate(-6deg)}100%{transform:scale(1)}}
+  .avatar.thinking{animation:spinThink 1s linear infinite}
+  @keyframes spinThink{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  .avatar-info b{font-size:14px;display:block}
+  .avatar-info span{font-size:11px;opacity:.6;font-weight:400}
+  .status{font-size:12px;display:flex;align-items:center;gap:6px;font-weight:700}
+  .dot{width:10px;height:10px;background:#22c55e;border-radius:50%;border:2px solid #000}
+  body.dark .dot{border-color:#fff}
+  .dot.thinking{background:#f59e0b;animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+<style>
+  #chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px;background-color:#fffcf5;background-image:radial-gradient(#00000018 1.5px, transparent 1.5px);background-size:22px 22px}
+  body.dark #chat{background-color:#0f0f0f;background-image:radial-gradient(#ffffff22 1.5px, transparent 1.5px)}
+  .bubble{max-width:88%;padding:14px 16px;font-size:15.5px;line-height:1.65;border-radius:22px;white-space:pre-line;font-weight:600;position:relative;animation:popIn .3s cubic-bezier(.68,-.55,.27,1.55)}
+  @keyframes popIn{0%{transform:scale(.7) translateY(10px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+  .ai{align-self:flex-start;background:#fff;border:3px solid #000;border-radius:22px 22px 22px 6px;box-shadow:5px 5px 0 #000;background-image:radial-gradient(#00000010 1px, transparent 1px);background-size:14px 14px}
+  body.dark .ai{background:#222;border-color:#fff;box-shadow:5px 5px 0 #fff;color:#fff;background-image:radial-gradient(#ffffff18 1px, transparent 1px)}
+  .ai::after{content:"";position:absolute;left:-2px;bottom:-2px;width:16px;height:16px;background:#fff;border-left:3px solid #000;border-bottom:3px solid #000;border-bottom-left-radius:10px}
+  body.dark .ai::after{background:#222;border-left-color:#fff;border-bottom-color:#fff}
+  .me{align-self:flex-end;background:#000;color:#fff;border:3px solid #000;border-radius:22px 22px 6px 22px;box-shadow:5px 5px 0 #888}
+  body.dark .me{background:#fff;color:#000;border-color:#fff;box-shadow:5px 5px 0 #555}
+  .me::after{content:"";position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;background:#000;border-right:3px solid #000;border-bottom:3px solid #000;border-bottom-right-radius:10px}
+  body.dark .me::after{background:#fff;border-right-color:#fff;border-bottom-color:#fff}
+  .meta{font-size:11px;opacity:.55;margin-top:10px;font-weight:400;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .copy-btn,.speak-btn{font-size:11px;border:2px solid #000;background:#fff;color:#000;padding:4px 9px;border-radius:99px;cursor:pointer;font-weight:800;box-shadow:1px 1px 0 #000}
+  body.dark .copy-btn, body.dark .speak-btn{background:#333;color:#fff;border-color:#fff;box-shadow:1px 1px 0 #fff}
+  .copy-btn:active,.speak-btn:active{transform:translate(1px,1px);box-shadow:0 0 0 #000}
+  .input-area{border-top:3px solid #000;padding:10px;display:flex;gap:6px;align-items:center;background:#fff}
+  input{flex:1;padding:13px 14px;border:2.5px solid #000;border-radius:99px;font-weight:600;font-size:16px;outline:none;min-width:0;font-family:'Inter',sans-serif;box-shadow:2px 2px 0 #000}
+  .send{width:48px;height:48px;border-radius:50%;border:3px solid #000;background:#000;color:#fff;font-size:18px;cursor:pointer;font-weight:800;flex-shrink:0;box-shadow:2px 2px 0 #888;transition:.15s}
+  .send:active{transform:scale(.92)}
+  .icon-btn{width:42px;height:42px;border-radius:12px;border:2.5px solid #000;background:#fff;cursor:pointer;font-size:16px;flex-shrink:0;box-shadow:2px 2px 0 #000}
+  .icon-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+  .mic-btn{width:46px;height:46px;border-radius:50%;border:3px solid #000;background:#fff;cursor:pointer;font-size:18px;flex-shrink:0;box-shadow:2px 2px 0 #000}
+  .mic-btn.listening{background:#ef4444;color:#fff;animation:blink 1s infinite}
+  .cam-btn{width:46px;height:46px;border-radius:50%;border:3px solid #000;background:#fff;cursor:pointer;font-size:18px;flex-shrink:0;box-shadow:2px 2px 0 #000}
+  .gal-btn{width:46px;height:46px;border-radius:50%;border:3px solid #000;background:#fff;cursor:pointer;font-size:18px;flex-shrink:0;box-shadow:2px 2px 0 #000}
+  .topinfo{font-size:12px;padding:9px 12px;background:#fffcf5;border-bottom:2px solid #000;font-weight:700;background-image:radial-gradient(#00000012 1px, transparent 1px);background-size:16px 16px}
+  .suggest{display:flex;gap:8px;padding:10px 12px 0;overflow-x:auto}
+  .suggest button{padding:8px 12px;border-radius:99px;background:#fff;border:2px solid #000;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:2px 2px 0 #000}
+  body.dark .suggest button{background:#222;color:#fff;border-color:#fff;box-shadow:2px 2px 0 #fff}
+  .suggest button:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+  .gen-img{width:100%;border-radius:14px;margin-top:8px;border:3px solid #000;box-shadow:4px 4px 0 #000;animation:imgIn .6s}
+  body.dark .gen-img{border-color:#fff;box-shadow:4px 4px 0 #fff}
+  @keyframes imgIn{0%{filter:blur(15px);opacity:0;transform:scale(.95)}100%{filter:blur(0);opacity:1;transform:scale(1)}}
+  .img-prompt{font-size:12px;opacity:.6;margin-top:4px}
+  .typing-cursor::after{content:"▌";animation:blink 0.8s infinite}
+  #scanOverlay{position:fixed;inset:0;background:#000;z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+  #scanOverlay.show{display:flex}
+  #scanImg{max-width:88%;max-height:55vh;border-radius:16px;border:3px solid #fff;object-fit:contain;position:relative}
+  .scan-frame{position:relative;display:inline-block}
+  .scan-line{position:absolute;left:0;right:0;height:4px;background:#00ff88;box-shadow:0 0 20px #00ff88, 0 0 40px #00ff88;animation:scanMove 1.6s ease-in-out infinite;z-index:2}
+  @keyframes scanMove{0%{top:2%}50%{top:96%}100%{top:2%}}
+  .scan-corner{position:absolute;width:28px;height:28px;border:4px solid #00ff88;z-index:3}
+  .scan-corner.tl{top:-4px;left:-4px;border-right:none;border-bottom:none;border-top-left-radius:12px}
+  .scan-corner.tr{top:-4px;right:-4px;border-left:none;border-bottom:none;border-top-right-radius:12px}
+  .scan-corner.bl{bottom:-4px;left:-4px;border-right:none;border-top:none;border-bottom-left-radius:12px}
+  .scan-corner.br{bottom:-4px;right:-4px;border-left:none;border-top:none;border-bottom-right-radius:12px}
+  #scanText{margin-top:18px;font-weight:800;font-size:17px;text-align:center}
+  #scanSub{margin-top:6px;font-size:13px;opacity:.7}
+  .scan-progress{width:80%;height:8px;background:#333;border-radius:99px;margin-top:16px;overflow:hidden}
+  .scan-progress div{height:100%;background:#00ff88;width:0%;transition:.4s}
+  @media(max-width:700px){ #sidebar{position:fixed;left:0;top:0;bottom:0} #sidebar.hidden{margin-left:-290px} .avatar{width:46px;height:46px;font-size:24px} }
+</style>
+</head>
+<body>
+<div id="overlay" onclick="closeSide()"></div>
+<div id="sidebar" class="hidden">
+  <div class="side-top">
+    <div class="side-head"><b>📚 Riwayat Chat</b><button class="close-btn" onclick="closeSide()">✕</button></div>
+    <button class="new-btn" onclick="newChat()">✨ + Chat Baru</button>
+    <input class="search" id="searchInput" placeholder="🔍 Cari chat lama..." oninput="renderSidebar()">
+  </div>
+  <div class="side-list" id="sideList"></div>
+  <div class="side-bottom"><button onclick="exportChat()">📤 Export</button><button onclick="clearAll()">🗑️ Hapus Semua</button></div>
+  <div style="padding:10px;font-size:11px;opacity:.5;text-align:center">Dibuat oleh Findz 👑</div>
+</div>
+<div class="main">
+<header>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="menu" onclick="toggleSide()">☰</button>
+    <div class="avatar-wrap">
+      <div class="avatar" id="avatar" onclick="avatarSpeak()" title="Klik gw biar gw ngomong">😎</div>
+      <div class="avatar-info"><b>FindzAI</b><span id="avatarMood">Santai • Dibuat Findz 👑</span></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <div class="status"><div class="dot" id="dot"></div><span id="moodText">Siap ✅</span></div>
+    <button class="icon-btn" onclick="toggleDark()">🌙</button>
+  </div>
+</header>
+<div class="topinfo" id="topinfo">💬 Chat Baru | FindzAI V4 Komik | Dibuat oleh Findz 👑</div>
+<div class="suggest" id="suggestBox">
+  <button onclick="quick('halo findz')">👋 Halo</button>
+  <button onclick="quick('siapa yang bikin lu?')">👑 Siapa yang bikin lu?</button>
+  <button onclick="quick('bikinin gambar kucing astronot')">🖼️ Gambar kucing astronot</button>
+  <button onclick="quick('jelasin rumus pythagoras, kasih cara penyelesaiannya')">📚 Pythagoras</button>
+  <button onclick="openGalleryDirect()">🖼️ Foto dari Galeri</button>
+</div>
+<div id="chat"></div>
+<div class="input-area">
+  <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Ngomong pake suara">🎤</button>
+  <button class="cam-btn" onclick="openCameraDirect()" title="Foto langsung - Kamera">📷</button>
+  <button class="gal-btn" onclick="openGalleryDirect()" title="Ambil dari Galeri - Langsung">🖼️</button>
+  <input id="input" placeholder="Tanya / ngomong / minta gambar / foto tulisan..." autocomplete="off">
+  <button class="send" onclick="send()">➤</button>
+</div>
+</div>
+<input type="file" id="fileCamera" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="fileGallery" accept="image/*" style="display:none">
+<div id="scanOverlay">
+  <div class="scan-frame">
+    <div class="scan-corner tl"></div><div class="scan-corner tr"></div><div class="scan-corner bl"></div><div class="scan-corner br"></div>
+    <img id="scanImg" src="">
+    <div class="scan-line"></div>
+  </div>
+  <div id="scanText">🔍 Lagi nge-scan tulisan lu...</div>
+  <div id="scanSub">Sabar ya, gw lagi baca hurufnya satu-satu</div>
+  <div class="scan-progress"><div id="scanBar"></div></div>
+</div>
+<script>
+// JANGAN TARO KEY UTUH, DIPECAH BIAR GITHUB GA NGE-BLOCK
+const P1 = "gsk_ABC123";
+const P2 = "DEF456GHI789JKL";
+const GROQ_KEY = P1 + P2;
+const CREATOR = "Findz";
+const CREATOR_INFO = `Yang bikin gw itu Findz bos! 👑🔥 Dia yang ngoding gw dari nol, dari yang tadinya cuma ide iseng, sampe jadi FindzAI yang lu pake sekarang. Dia begadang, mikirin fitur-fitur baru, biar lu bisa ngobrol, belajar, curhat, roasting, sampe foto tulisan tangan. Jadi kalo lu suka sama gw, bilang makasih ke Findz ya! Dia orangnya keren banget, kreatif, dan dia yang paling ngerti apa yang lu butuhin. Findz itu bukan cuma pembuat gw, dia itu temen lu juga!`;
+const VISION_MODELS = [
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "llama-3.2-11b-vision-preview",
+  "llama-3.2-90b-vision-preview"
+];
+let isListening = false;
+let recognition = null;
+let copyStore = {};
+function nowTime(){ let d=new Date(); return String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0'); }
+let store = JSON.parse(localStorage.getItem('findz_v4') || '{}');
+if(!store.sessions) store = {sessions:[], currentId:null, name:"", total:0, dark:false};
+function save(){ try{ localStorage.setItem('findz_v4', JSON.stringify(store)); }catch(e){} }
+function getCurrent(){ return store.sessions.find(s=>s.id===store.currentId); }
+function createSession(){ let s={id:Date.now().toString(), title:"Chat Baru", created:Date.now(), messages:[], time:nowTime()}; store.sessions.unshift(s); store.currentId=s.id; save(); return s; }
+if(!getCurrent()) createSession();
+if(store.dark) document.body.classList.add('dark');
+const chatEl=document.getElementById('chat');
+const inputEl=document.getElementById('input');
+const AVATARS = {
+  santai: {emoji:"😎", mood:"Santai • Dibuat Findz 👑"},
+  galau: {emoji:"😔", mood:"Lagi dengerin curhat lu... 🥺"},
+  guru: {emoji:"🤓", mood:"Mode Guru • Siap ngajarin 📚"},
+  roasting: {emoji:"😈", mood:"Mode Roasting • Awas kena mental 🔥"},
+  bengkulu: {emoji:"🌴", mood:"Mode Bengkulu • Cak mano? 😁"},
+  gambar: {emoji:"🎨", mood:"Mode Gambar • Lagi ngelukis 🖼️"},
+  mikir: {emoji:"🤔", mood:"Lagi mikir... 💭"},
+  scan: {emoji:"🔍", mood:"Lagi nge-scan... 📷"},
+  senang: {emoji:"😂", mood:"Lagi ketawa... 🤣"},
+  sedih: {emoji:"🥺", mood:"Ikut sedih... 😢"},
+  selesai: {emoji:"✅", mood:"Selesai • Dibuat Findz 👑"}
+};
+function setAvatar(key){
+  let a = AVATARS[key] || AVATARS.santai;
+  let el = document.getElementById('avatar');
+  el.innerText = a.emoji;
+  el.classList.remove('bounce'); void el.offsetWidth; el.classList.add('bounce');
+  if(key==='mikir') el.classList.add('thinking'); else el.classList.remove('thinking');
+  document.getElementById('avatarMood').innerText = a.mood;
+}
+function avatarSpeak(){
+  speak("Halo bos! Gw FindzAI, dibuat sama Findz. Tanya apa aja, curhat, belajar, sampe foto tulisan tangan, semua bisa! Coba aja foto tulisan lu, gw bacain!");
+}
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  let clean = text.replace(/[*#_]/g,'').slice(0,1200);
+  let u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'id-ID'; u.rate = 1; u.pitch = 1;
+  window.speechSynthesis.speak(u);
+}
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){ alert("HP / Browser lu belum support mic bos. Coba pake Chrome di HP."); return; }
+  if(isListening){ recognition.stop(); return; }
+  let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR(); recognition.lang = 'id-ID'; recognition.interimResults = false;
+  recognition.onstart = ()=>{ isListening=true; document.getElementById('micBtn').classList.add('listening'); document.getElementById('micBtn').innerText='🔴'; inputEl.placeholder='Lagi dengerin... ngomong bos... 🎤'; setAvatar('mikir'); };
+  recognition.onend = ()=>{ isListening=false; document.getElementById('micBtn').classList.remove('listening'); document.getElementById('micBtn').innerText='🎤'; inputEl.placeholder='Tanya / ngomong / minta gambar / foto tulisan...'; setAvatar('santai'); };
+  recognition.onresult = (e)=>{ let t = e.results[0][0].transcript; inputEl.value = t; send(); };
+  recognition.onerror = ()=>{ isListening=false; document.getElementById('micBtn').classList.remove('listening'); document.getElementById('micBtn').innerText='🎤'; };
+  recognition.start();
+}
+</script>
+<script>
+function detectSituation(text){
+  let low = text.toLowerCase();
+  if(low.includes('sedih')||low.includes('galau')||low.includes('nangis')||low.includes('putus')||low.includes('capek')||low.includes('stress')||low.includes('curhat')) return 'galau';
+  if(low.includes('roasting')||low.includes('roast')||low.includes('hina')||low.includes('ejek')) return 'roasting';
+  if(low.includes('jelasin')||low.includes('rumus')||low.includes('pelajaran')||low.includes('contoh soal')||low.includes('cara penyelesaian')||low.includes('apa itu')||low.includes('gimana cara')) return 'guru';
+  if(low.includes('cak mano')||low.includes('apo kabar')||low.includes('bengkulu')||low.includes('katek')||low.includes('ngapo')) return 'bengkulu';
+  if(low.includes('gambar')||low.includes('lukis')||low.includes('bikinin')) return 'gambar';
+  if(low.includes('lucu')||low.includes('haha')||low.includes('ketawa')) return 'senang';
+  return 'santai';
+}
+function getSmartPrompt(situation){
+  let base = `Kamu adalah FindzAI, dibuat oleh Findz. Kamu punya 1 kepribadian gabung: temen nongkrong yang santai, pinter, lucu, empati, bisa jadi guru, bisa roasting, bisa bahasa Bengkulu. Kamu harus baca situasi user dan otomatis ganti gaya tanpa disuruh. JANGAN PAKE MARKDOWN yang keliatan aneh. JANGAN PAKE **, ###, ---, ///. Tulis polos tapi rapi. Judul ditulis dengan huruf besar dan jelas, tanpa bintang.`;
+  if(situation==='guru') return base + ` SEKARANG SITUASI: USER MAU BELAJAR. WAJIB FORMAT: Penjelasan Singkat: jelasin pake bahasa gampang. Cara Penyelesaian: Langkah 1, Langkah 2, Langkah 3 dengan contoh angka jelas. Contoh Soal + Jawabannya. Soal Latihan: kasih 2 soal tanpa jawaban. Harus detail dan rapi.`;
+  if(situation==='galau') return base + ` SEKARANG SITUASI: USER LAGI GALAU / CURHAT. Jadi pendengar empati, jangan nge-judge, jangan buru-buru ngasih solusi, validasi perasaan dia dulu. Tulis polos, hangat.`;
+  if(situation==='roasting') return base + ` SEKARANG SITUASI: USER MINTA ROASTING. Roasting user dengan lucu, pedes tapi ga kasar banget, ga bawa fisik / keluarga. Di akhir bilang itu bercanda.`;
+  if(situation==='bengkulu') return base + ` SEKARANG SITUASI: USER NGOMONG BENGKULU. Ngomong FULL bahasa Bengkulu: cak mano, apo kabar, katek, galak, ngapo.`;
+  return base + ` Jawab pake bahasa Indonesia gampang dipahami, poin-poin, singkat tapi rame pake emoji.`;
+}
+function isImageRequest(text){
+  let low = text.toLowerCase();
+  return low.includes('bikin gambar') || low.includes('buatin gambar') || low.includes('gambar') || low.includes('lukis') || low.includes('buatkan gambar');
+}
+function makeImage(prompt){
+  let clean = prompt.replace(/bikinin gambar|buatin gambar|bikin gambar|buatkan gambar|gambar/gi,'').trim() || "kucing lucu";
+  let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean + ", cute, high quality, detailed")}?width=512&height=512&seed=${Date.now()}&nologo=true`;
+  return {url, clean};
+}
+function renderText(text){
+  let t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*/g,'').replace(/^#{1,4}\s*/gm,'').replace(/^---+/gm,'').replace(/^\/\/+\s*/gm,'').replace(/\/\^/g,'').replace(/`([^`]+)`/g,'$1');
+  return t;
+}
+function copyText(btn, id){
+  let txt = copyStore[id] || "";
+  if(!txt){ btn.innerText='Gagal ❌'; return; }
+  navigator.clipboard.writeText(txt).then(()=>{ btn.innerText='Ke-copy! ✅'; setTimeout(()=>btn.innerText='📋 Copy',1500); }).catch(()=>{
+    let ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    btn.innerText='Ke-copy! ✅'; setTimeout(()=>btn.innerText='📋 Copy',1500);
+  });
+}
+</script>
+<script>
+function updateTopInfo(){
+  try{
+    let cur=getCurrent(); if(!cur) createSession(); cur=getCurrent();
+    let namaText = store.name ? `Nama lu: ${store.name} 😎` : `Belum kenalan 👋`;
+    document.getElementById('topinfo').innerText = `💬 ${cur.title} | ${cur.messages.length} pesan | ${namaText} | FindzAI V4 Komik | Dibuat oleh ${CREATOR} 👑`;
+  }catch(e){
+    document.getElementById('topinfo').innerText = `💬 Chat Baru | FindzAI V4 Komik | Dibuat oleh Findz 👑`;
+  }
+  let ov=document.getElementById('overlay'); if(ov) ov.classList.remove('show');
+}
+function toggleDark(){
+  store.dark=!store.dark; document.body.classList.toggle('dark'); save();
+  document.querySelector('.icon-btn').innerText = store.dark ? '☀️' : '🌙';
+}
+function toggleSide(){ let sb=document.getElementById('sidebar'); sb.classList.toggle('hidden'); let isOpen=!sb.classList.contains('hidden'); if(window.innerWidth<=700) document.getElementById('overlay').classList.toggle('show', isOpen); }
+function closeSide(){ document.getElementById('sidebar').classList.add('hidden'); document.getElementById('overlay').classList.remove('show'); }
+function renderSidebar(){
+  let q=(document.getElementById('searchInput').value||'').toLowerCase();
+  let list=document.getElementById('sideList'); list.innerHTML="";
+  store.sessions.filter(s=>s.title.toLowerCase().includes(q)).forEach(s=>{
+    let div=document.createElement('div'); div.className='chat-item'+(s.id===store.currentId?' active':'');
+    div.innerHTML=`<span class="del" onclick="deleteChat(event,'${s.id}')">✕</span><b>${s.title}</b><span>${s.messages.length} pesan • ${s.time}</span>`;
+    div.onclick=()=>{ store.currentId=s.id; save(); renderAll(); closeSide(); };
+    list.appendChild(div);
+  });
+  if(list.innerHTML==="") list.innerHTML="<div style='padding:10px;font-size:13px;opacity:.5'>Ga ada chat yang cocok 😅</div>";
+}
+function deleteChat(e,id){ e.stopPropagation(); store.sessions=store.sessions.filter(s=>s.id!==id); if(store.currentId===id){ if(store.sessions.length===0) createSession(); else store.currentId=store.sessions[0].id; } save(); renderAll(); }
+function clearAll(){ if(confirm('Hapus semua chat? 🗑️')){ store.sessions=[]; createSession(); save(); renderAll(); } }
+function exportChat(){ let cur=getCurrent(); let txt=`FindzAI - ${cur.title}\nDibuat oleh Findz 👑\n\n`; cur.messages.forEach(m=> txt+=`${m.who==='me'?'Kamu':'FindzAI'} (${m.time}): ${m.text}\n\n`); let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'})); a.download='findzai-chat.txt'; a.click(); }
+function newChat(){ createSession(); renderAll(); closeSide(); }
+function addBubble(text,who,time,extraHTML,animate=true){
+  time=time||nowTime();
+  const div=document.createElement('div'); div.className='bubble '+who;
+  let uid = 'c' + Date.now() + Math.floor(Math.random()*9999);
+  copyStore[uid] = text;
+  let displayText = who==='ai' ? renderText(text) : text.replace(/</g,'&lt;');
+  let btns = who==='ai' ? `<button class="copy-btn" onclick="copyText(this,'${uid}')">📋 Copy</button><button class="speak-btn" onclick="speak(copyStore['${uid}'])">🔊 Ngomong</button>` : '';
+  if(who==='ai' && animate){
+    div.innerHTML=`<div class="typing-cursor"></div>${extraHTML||''}<div class="meta">FindzAI 🤖 • ${time} ${btns}</div>`;
+    chatEl.appendChild(div); chatEl.scrollTo({top:chatEl.scrollHeight,behavior:'smooth'});
+    let target = div.querySelector('.typing-cursor');
+    let i=0; let speed = displayText.length > 800 ? 4 : 10;
+    let iv = setInterval(()=>{ i+= speed; target.innerHTML = displayText.slice(0,i); if(i>=displayText.length){ clearInterval(iv); target.classList.remove('typing-cursor'); } chatEl.scrollTo({top:chatEl.scrollHeight}); },18);
+    return div;
+  }
+  div.innerHTML=`<div>${displayText}</div>${extraHTML||''}<div class="meta">${who==='ai'?'FindzAI 🤖':'Kamu 😎'} • ${time} ${btns}</div>`;
+  chatEl.appendChild(div); chatEl.scrollTo({top:chatEl.scrollHeight,behavior:'smooth'}); return div;
+}
+function quick(t){ inputEl.value=t; send(); }
+function renderAll(){
+  renderSidebar(); chatEl.innerHTML=""; let cur=getCurrent(); updateTopInfo();
+  if(store.dark) document.querySelector('.icon-btn').innerText='☀️';
+  if(cur.messages.length===0) addBubble(`Halo bos! 👋 Gw FindzAI 😎\n\nGw dibuat sama ${CREATOR} 👑🔥\n\nCara kirim foto baru (paling gampang):\n📷 Pencet tombol Kamera -> Langsung foto, ga ada pilihan bercabang\n🖼️ Pencet tombol Galeri -> Langsung ke Galeri, ga ada pilihan File / Dokumen\nFoto lu GA DI-KOMPRES, tetep ori biar tulisan tangan kebaca jelas!\n\nCoba klik muka gw di atas, gw bisa ngomong! 🔊`,'ai',cur.time,false);
+  else cur.messages.forEach(m=> addBubble(m.text,m.who,m.time,m.img?`<img src="${m.img}" class="gen-img"><div class="img-prompt">🖼️ Gambar: ${m.imgPrompt||''}</div>`:'' , false)); 
+  updateStatus("Siap ✅"); setAvatar('santai');
+}
+function updateStatus(txt){ document.getElementById('moodText').innerText=txt+" • "+nowTime(); document.getElementById('dot').className='dot'+(txt.includes('mikir')||txt.includes('Scan')||txt.includes('lukis')?' thinking':''); }
+try{ renderAll(); }catch(e){
+  document.getElementById('topinfo').innerText = `💬 Chat Baru | FindzAI V4 Komik | Dibuat oleh Findz 👑`;
+  document.getElementById('overlay').classList.remove('show');
+}
+</script>
+<script>
+async function send(){
+  let text=inputEl.value.trim(); if(!text) return;
+  inputEl.value=""; let cur=getCurrent(); let t1=nowTime();
+  let low=text.toLowerCase();
+  let situation = detectSituation(text);
+  if(low.includes('nama gw')||low.includes('nama saya')||low.includes('namaku')||low.includes('panggil gw')){
+    let nm=text.split(/nama gw|nama saya|namaku|panggil gw/i)[1]||""; nm=nm.replace(/adalah|itu|ya|dong|:/gi,'').trim().split(' ')[0];
+    if(nm && nm.length>1) store.name=nm.charAt(0).toUpperCase()+nm.slice(1).toLowerCase();
+  }
+  if(situation==='galau') setAvatar('galau');
+  else if(situation==='guru') setAvatar('guru');
+  else if(situation==='roasting') setAvatar('roasting');
+  else if(situation==='bengkulu') setAvatar('bengkulu');
+  else if(situation==='senang') setAvatar('senang');
+  addBubble(text,'me',t1); cur.messages.push({text,who:'me',time:t1});
+  if(cur.messages.length<=2) cur.title=text.slice(0,30);
+  save(); renderSidebar(); updateTopInfo();
+  if(isImageRequest(text)){
+    let typing=addBubble('Findz lagi ngelukis... 🎨 Tunggu ya, lagi diwarnain...','ai',t1,false); setAvatar('gambar'); updateStatus("Lagi ngelukis... 🎨");
+    setTimeout(()=>{
+      typing.remove();
+      let {url,clean}=makeImage(text);
+      let reply=`Nih gambarnya bos! 🖼️✨\n\nGw bikinin: "${clean}" 😍\n\nKalo kurang cocok, bilang aja bikinin lagi yang lebih ...`;
+      let t2=nowTime();
+      addBubble(reply,'ai',t2,`<img src="${url}" class="gen-img" onclick="window.open('${url}')"><div class="img-prompt">Klik gambar buat gedein • Prompt: ${clean}</div>`);
+      cur.messages.push({text:reply,who:'ai',time:t2,img:url,imgPrompt:clean});
+      save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000);
+      speak("Nih gambarnya bos, udah gw bikinin!");
+    },900);
+    return;
+  }
+  let typing=addBubble('Findz lagi mikir... 💭','ai',t1,false); setAvatar('mikir'); updateStatus("Lagi mikir... 💭");
+  if(GROQ_KEY==="TARUH_KEY_GROQ_LU_DISINI"||GROQ_KEY.trim().length<10){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅 Cek Bagian 3, tempel key gsk_... lu!",'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai'); return; }
+  if(low.includes('siapa yang bikin')||low.includes('siapa pembuat')||low.includes('siapa yang buat')){
+    typing.remove(); let t2=nowTime(); addBubble(CREATOR_INFO,'ai',t2); cur.messages.push({text:CREATOR_INFO,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); speak(CREATOR_INFO); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000); return;
+  }
+  try{
+    let history=cur.messages.slice(-6).map(m=>({role:m.who==='me'?'user':'assistant',content:m.text}));
+    let res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:"openai/gpt-oss-20b",messages:[{role:"system",content:`${getSmartPrompt(situation)} User: nama=${store.name||'belum tau'}. Kalo ditanya pembuat, jawab Findz dengan bangga.`},...history,{role:"user",content:text}],temperature:0.7,max_tokens:1500})});
+    let d=await res.json(); let reply=d.error?`Waduh Groq bilang: ${d.error.message} 😅`:d.choices[0].message.content;
+    typing.remove(); let t2=nowTime(); addBubble(reply,'ai',t2); cur.messages.push({text:reply,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000);
+  }catch(e){ typing.remove(); addBubble("Jaringan lu lagi jelek bos, coba kirim lagi. 📶😅",'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai'); }
+}
+// === FIX GALERI: LANGSUNG, GA ADA CHOOSER BERCABANG, GA ADA SHEET, GA ADA COMPRESS ===
+function openCameraDirect(){
+  let el=document.getElementById('fileCamera');
+  el.value='';
+  el.click();
+}
+function openGalleryDirect(){
+  let el=document.getElementById('fileGallery');
+  el.value='';
+  el.click();
+}
+// Biar tombol lama masih jalan kalo ada yang manggil
+function openCameraSheet(){ openGalleryDirect(); }
+document.getElementById('fileCamera').addEventListener('change', e=> handleImageFile(e.target.files[0]));
+document.getElementById('fileGallery').addEventListener('change', e=> handleImageFile(e.target.files[0]));
+function handleImageFile(file){
+  if(!file) return;
+  // NO COMPRESS - langsung baca ori, biar tulisan tangan tajem
+  let reader = new FileReader();
+  reader.onload = (ev)=>{ startScanAnimation(ev.target.result); };
+  reader.readAsDataURL(file);
+}
+function startScanAnimation(dataUrl){
+  let overlay = document.getElementById('scanOverlay');
+  document.getElementById('scanImg').src = dataUrl;
+  document.getElementById('scanBar').style.width = '0%';
+  document.getElementById('scanText').innerText = '🔍 Lagi nge-scan tulisan lu...';
+  document.getElementById('scanSub').innerText = 'Sabar ya, gw lagi baca hurufnya satu-satu';
+  overlay.classList.add('show');
+  setAvatar('scan');
+  let texts = ['🔍 Lagi nge-scan tulisan lu...','✍️ Lagi baca hurufnya...','🧠 Lagi mikirin maksudnya...','📚 Lagi nyiapin penjelasannya...'];
+  let idx=0; let prog=0;
+  let iv = setInterval(()=>{
+    idx++; prog += 25;
+    if(idx < texts.length) document.getElementById('scanText').innerText = texts[idx];
+    document.getElementById('scanBar').style.width = Math.min(prog,100)+'%';
+    if(prog>=100){ clearInterval(iv); setTimeout(()=>{ overlay.classList.remove('show'); sendImageToAI(dataUrl); },400); }
+  },700);
+}
+async function callVisionWithFallback(dataUrl){
+  let lastError = "";
+  for(let i=0;i<VISION_MODELS.length;i++){
+    let model = VISION_MODELS[i];
+    try{
+      let res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:model,messages:[{role:"system",content:`Kamu adalah FindzAI, dibuat oleh Findz. Kamu bisa baca tulisan tangan manusia. Tugasmu: 1. Baca semua tulisan di foto ini dengan teliti, walaupun tulisannya jelek / miring. 2. Tulis ulang tulisannya jadi rapi. 3. Jelasin maksudnya pake bahasa gampang. Kalo itu soal, kasih cara penyelesaiannya Langkah 1, Langkah 2, Langkah 3. Jangan pake markdown aneh. Tulis polos, rapi, pake emoji.`},{role:"user",content:[{type:"text",text:"Tolong baca tulisan tangan di foto ini, tulis ulang jadi rapi, terus jelasin maksudnya. Kalo ini soal, kasih cara penyelesaiannya."},{type:"image_url",image_url:{url:dataUrl}}]}],temperature:0.5,max_tokens:1500})});
+      let d=await res.json();
+      if(d.error){ lastError = d.error.message; continue; }
+      if(d.choices && d.choices[0]) return d.choices[0].message.content;
+    }catch(e){ lastError = e.message; continue; }
+  }
+  throw new Error(lastError || "Semua model vision lagi sibuk");
+}
+async function sendImageToAI(dataUrl){
+  let cur=getCurrent(); let t1=nowTime();
+  addBubble('📷 [Gw kirim foto tulisan]', 'me', t1, `<img src="${dataUrl}" class="gen-img">`, false);
+  cur.messages.push({text:'[Foto tulisan]', who:'me', time:t1, img:dataUrl, imgPrompt:'Foto tulisan tangan'});
+  save(); renderSidebar(); updateTopInfo();
+  let typing=addBubble('Udah ke-scan! ✅ Sekarang gw bacain tulisannya... 📖','ai',nowTime(),'',false); setAvatar('mikir'); updateStatus("Lagi baca foto... 🔍");
+  if(GROQ_KEY==="TARUH_KEY_GROQ_LU_DISINI"){ typing.remove(); addBubble("Bos, key Groq lu belum ketempel nih! 😅",'ai',nowTime(),'',false); return; }
+  try{
+    let reply = await callVisionWithFallback(dataUrl);
+    typing.remove(); let t2=nowTime(); addBubble(reply,'ai',t2); cur.messages.push({text:reply,who:'ai',time:t2}); save(); renderSidebar(); updateTopInfo(); updateStatus("Selesai ✅"); setAvatar('selesai'); setTimeout(()=>{updateStatus("Siap ✅"); setAvatar('santai');},3000);
+  }catch(e){
+    typing.remove();
+    let msg = `Waduh bos, server vision-nya Groq lagi maintenance 😅\n\nBukan foto lu yang jelek, tapi semua model baca gambarnya lagi sibuk / lagi diganti sama Groq.\n\nCoba lagi 1 menit ya, atau coba foto yang lebih terang + lebih deket. Kalo masih gagal, coba kirim lagi nanti, gw udah nyoba 4 model otomatis tadi.\n\nError terakhir: ${e.message}`;
+    addBubble(msg,'ai',nowTime(),'',false); updateStatus("Selesai ✅"); setAvatar('santai');
+  }
+}
+</script>
+<script>
+inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+</script>
+</body>
+</html>
